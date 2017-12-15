@@ -90,7 +90,7 @@ foreach ($item in $items)
 		[byte[]]$file_bytes = get-content -encoding byte -path $item
 		for ($i = 0; $i -lt $file_bytes.Length; $i += $buffer)
 		{
-			[byte[]]$chunk = $file_bytes[$i..($i+$buffer)]
+			[byte[]]$chunk = $file_bytes[$i..($i+$buffer-1)]
 			sendBytes($chunk)
 			sendBytes($wait)
 			Start-Sleep -m $delay
