@@ -31,7 +31,7 @@ param (
 	[parameter(
 	   Mandatory = $false
 	)]
-	[string] $buffer = 4096
+	[int32] $buffer = 4096
 )
 
 function generateCMDs ($delta)
